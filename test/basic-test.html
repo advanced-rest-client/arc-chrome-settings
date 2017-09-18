@@ -1,0 +1,111 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../iron-test-helpers/test-helpers.js"></script>
+    <script src="stub.js"></script>
+    <link rel="import" href="../arc-chrome-settings.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <arc-chrome-settings></arc-chrome-settings>
+      </template>
+    </test-fixture>
+
+    <script>
+    /* global fixture, assert */
+    suite('basic', function() {
+
+      var element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Has default configuration', function() {
+        var config = element.defaultConfig;
+        assert.isTrue(config.HISTORY_ENABLED);
+        assert.isTrue(config.MAGICVARS_ENABLED);
+        assert.isTrue(config.useCookieStorage);
+        assert.typeOf(config.requestDefaultTimeout, 'number');
+      });
+
+      function readSettings() {
+        var event = new CustomEvent('settings-read', {
+          detail: {},
+          cancelable: true,
+          bubbles: true
+        });
+        document.body.dispatchEvent(event);
+        return event;
+      }
+
+      test('Handles settings-read event', function() {
+        var event = readSettings();
+        assert.isTrue(event.defaultPrevented);
+      });
+
+      test('The settings-read event has the result property', function() {
+        var event = readSettings();
+        assert.ok(event.detail.result);
+      });
+
+      test('settings-read event result resolves to an object', function() {
+        var event = readSettings();
+        return event.detail.result.then(result => {
+          assert.typeOf(result, 'object');
+        });
+      });
+
+      function storeSettings() {
+        var event = new CustomEvent('settings-changed', {
+          detail: {
+            name: 'test',
+            value: 'test'
+          },
+          cancelable: true,
+          bubbles: true
+        });
+        document.body.dispatchEvent(event);
+        return event;
+      }
+
+      test('Handles settings-changed event', function() {
+        var event = storeSettings();
+        assert.isTrue(event.defaultPrevented);
+      });
+
+      test('The settings-changed event has the result property', function() {
+        var event = storeSettings();
+        assert.ok(event.detail.result);
+      });
+
+      test('settings-changed sends non-cancelable settings-changed event', function() {
+        var called = 0;
+        element.addEventListener('settings-changed', function() {
+          called++;
+        });
+        var event = storeSettings();
+        return event.detail.result.then(() => {
+          assert.isAbove(called, 0);
+        });
+      });
+    });
+    </script>
+
+  </body>
+</html>
